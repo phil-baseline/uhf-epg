@@ -1,0 +1,10 @@
+# mega_id = epgshare01 source id  (for names the automatic rules can't bridge)
+cp24.ca = Cable.Pulse.24.(CP24).HD.ca2
+bnn.ca = BNN.Bloomberg.ca2
+theweathernetwork.ca = The.Weather.Network.Canada.HD.ca2
+cpacottawaen.ca = [CPAC].Cable.Public.Affairs.Channel.HD.ca2
+madisonsquaregarden.us = MSG.National.us2
+madisonsquaregarden2.us = MSG2.HD.us2
+madisonsquaregardenplus.us = MSG.Plus.us2
+sportsnetnewyork.us = SNY.SportsNet.New.York.HD.us2
+foxnews.us = Fox.News.Channel.HD.us2

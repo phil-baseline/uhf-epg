@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 translate.py demo
-      - run: mkdir -p site && python3 translate.py site 3 && ls -la site
+      - run: mkdir -p site && python3 translate.py site 3 && ls -la site && head -60 site/report.txt
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
