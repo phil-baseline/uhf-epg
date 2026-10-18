@@ -70,7 +70,8 @@ def match(mega_ids, sources, counts, aliases):
         if k not in exact or rank(s) > rank(exact[k]):
             exact[k] = s
         c = callsign_of_source(s)
-        if c and (c not in calls or rank(s) > rank(calls[c])):
+        main = lambda x: (".us_locals" in x and re.search(r"-DT\.", x) is not None, rank(x))  # main feed beats subchannels (WIS-DT over WIS-DT2)
+        if c and (c not in calls or main(s) > main(calls[c])):
             calls[c] = s
         by_cc.setdefault(cc, []).append((word_prefixes(s), n, s))
     out = {}
@@ -178,6 +179,7 @@ def demo():
     assert key("Sportsnet.(Pacific).ca2") == ("sportsnetpacific", "ca")
     assert key("KCBS-DT.us_locals1")[1] == "us"
     assert callsign_of_source("KCBS-DT.us_locals1") == "kcbs"
+    assert match(["nb10wis.us"], ["WIS-DT2.us_locals1", "WIS-DT.us_locals1"], {"WIS-DT2.us_locals1": 99, "WIS-DT.us_locals1": 5}, {}) == {"nb10wis.us": ("WIS-DT.us_locals1", "callsign")}
     for mega, cs in [("cbs2kcbs", "kcbs"), ("abcwabc", "wabc"), ("fox2ktvuplus", "ktvu"), ("cbs13wloxdt2", "wlox"),
                      ("nbc13kyma2", "kyma"), ("cbs4wbz", "wbz"), ("ktla", "ktla"), ("pbswliw21", "wliw")]:
         assert callsign_of_mega(mega) == cs, (mega, callsign_of_mega(mega))
