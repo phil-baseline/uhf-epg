@@ -34,6 +34,16 @@ def key(src):
     return re.sub(r"[^a-z0-9+&]", "", name.lower()), m[2].lower()
 
 
+VARIANT = {"en", "espanol", "espaol", "mundo", "plus", "west", "family", "kal", "latino", "deportes"}
+
+
+def word_prefixes(src):
+    """CBC.News.Network.HD.ca2 -> {'cbc': 'newsnetwork', 'cbcnews': 'network', ...} (prefix -> remainder tokens)"""
+    m = re.match(r"^(.*)\.([a-z]{2})(?:_[a-z]+)?\d*$", src, re.I)
+    toks = [t for t in re.split(r"[^a-z0-9+&]+", (m[1] if m else "").lower()) if t and t not in ("hd", "fhd", "uhd", "4k")]
+    return {"".join(toks[:i]): toks[i:] for i in range(1, len(toks))}
+
+
 def callsign_of_source(src):
     m = re.match(r"^([KW][A-Z]{2,3})(?:-[A-Z0-9]+)?\.us_locals", src)
     return m[1].lower() if m else None
@@ -62,7 +72,7 @@ def match(mega_ids, sources, counts, aliases):
         c = callsign_of_source(s)
         if c and (c not in calls or rank(s) > rank(calls[c])):
             calls[c] = s
-        by_cc.setdefault(cc, []).append((n, s))
+        by_cc.setdefault(cc, []).append((word_prefixes(s), n, s))
     out = {}
     for mid in mega_ids:
         name, _, cc = mid.rpartition(".")
@@ -73,7 +83,9 @@ def match(mega_ids, sources, counts, aliases):
         elif cc == "us" and callsign_of_mega(name) in calls:
             out[mid] = (calls[callsign_of_mega(name)], "callsign")
         elif len(name) >= 4:
-            cands = [(len(n), -rank(s), s) for n, s in by_cc.get(cc, []) if n.startswith(name)]
+            # whole-word prefix only, and not a language/feed variant (History En Espanol, MeTV Plus, Showtime 2)
+            cands = [(len(n), -rank(s), s) for wp, n, s in by_cc.get(cc, [])
+                     if name in wp and not (set(wp[name]) & VARIANT or any(t.isdigit() for t in wp[name]))]
             if cands:
                 out[mid] = (min(cands)[2], "prefix")
     return out
@@ -171,6 +183,10 @@ def demo():
         assert callsign_of_mega(mega) == cs, (mega, callsign_of_mega(mega))
     # ponytail: bare 4-letter names (wetv) also read as callsigns; exact match runs first so real networks win
     assert callsign_of_mega("tsn1") is None and callsign_of_mega("hgtv") is None
+    assert match(["historychannel.us", "metv.us", "showtime.us", "starzencorewest.us"],
+                 ["History.Channel.En.Español.us2", "MeTV.Plus.us2", "Showtime.2.HD.us2", "Starz.Encore.Westerns.SD.us2"],
+                 {"History.Channel.En.Español.us2": 5, "MeTV.Plus.us2": 5, "Showtime.2.HD.us2": 5,
+                  "Starz.Encore.Westerns.SD.us2": 5}, {}) == {}
     srcs = ["CTV.Winnipeg.HD.ca2", "KCBS-DT.us_locals1", "CBC.News.Network.ca2", "CBC.News.Network.HD.ca2",
             "Cable.Pulse.24.(CP24).HD.ca2", "Empty.ca2"]
     counts = {s: 10 for s in srcs[:-1]}
